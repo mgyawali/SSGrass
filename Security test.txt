@@ -1,0 +1,75 @@
+RandomPermutation:=function(S)
+n:=#S;
+v:=[v: v in S];
+S0:=S;
+for i in [1..n] do
+v[i]:=Random(S0);
+S0:=S0 diff {v[i]};
+end for;
+return(v);
+end function;
+
+	// Matrix with at most 3 non-zero elements for each row
+RandomSparseMatrix:=function(F,N)
+M:=IdentityMatrix(F,N);
+S:={s: s in [1..N]};
+A:=PermutationMatrix(F,RandomPermutation(S));
+B:=PermutationMatrix(F,RandomPermutation(S));
+S:=S diff {1};
+for i in [1..N-2] do
+n:=Random(0,2);
+R:=RandomSubset(S,n);
+for r in R do
+repeat
+M[i,r]:=Random(F);
+until M[i,r] ne 0;
+end for;
+S:=S diff {i+1};
+end for;
+return(A*M*B);
+end function;
+
+RandomPolynomial:=function(F,N,d)
+R:=PolynomialRing(F,N);
+MR:=MonomialsOfDegree(R,d);
+n:=#MR;
+P:=R!0;
+for i in [1..n] do
+P:=P+Random(F)*MR[i];
+end for;
+return(P);
+end function;
+
+F:=GF(2);
+K:=GF(2^13);
+n:=9;
+d:=2*(n-2);
+N:=Binomial(n,2);
+R:=PolynomialRing(K,N,"grevlex");
+A:=AntisymmetricMatrix([R.i: i in [1..N]]);
+S:=[1..n];
+S:={s: s in S};
+S:=Subsets(S,6);
+eqGrass:={};
+
+for s in S do
+t:=[i:i in s];
+pf:=Pfaffian(Submatrix(A,t,t));
+eqGrass:=eqGrass join {pf};
+end for;
+
+repeat
+	A := RandomSparseMatrix(F,N);
+	//A := PermutationMatrix(F,RandomPermutation({i: i in [1..N]}));
+until Determinant(A) ne 0;
+
+time eqGrass := { Evaluate(f, Eltseq(ChangeRing(A, R)*Matrix(R, N, 1, [R.i : i in [1..N]]))) : f in eqGrass };
+H:={i: i in [1..N]};
+H:=RandomSubset(H,2*d-n-1);
+H:={R!RandomPolynomial(F,N,1): i in [1..n-1]} join {R.i-Random(K): i in H};
+eqGrass:=eqGrass join H;
+
+I := ideal<R|eqGrass>;
+time G := GroebnerBasis(I);
+Dimension(I);
+Dimension(R/I);
