@@ -42,7 +42,7 @@ end function;
 
 F:=GF(2);
 K:=GF(2^13);
-n:=9;
+n:=12;
 d:=2*(n-2);
 N:=Binomial(n,2);
 R:=PolynomialRing(K,N,"grevlex");
